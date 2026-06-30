@@ -8,12 +8,20 @@ COPY .mvn .mvn
 COPY pom.xml .
 COPY sonar-project.properties .
 COPY checkstyle.xml .
+
+# Make mvnw executable
+RUN chmod +x mvnw
+
+# Download dependencies (this step will be cached unless pom.xml changes)
+RUN ./mvnw dependency:go-offline -B
+
+# Now copy the source code
 COPY package.json .
 COPY package-lock.json .
 COPY src src
 
-RUN chmod +x mvnw
-RUN ./mvnw clean package -Pprod,-webapp -DskipTests -Dskip.npm=true -Dskip.installnodenpm=true
+# Build the application offline
+RUN ./mvnw clean package -Pprod,-webapp -DskipTests -Dskip.npm=true -Dskip.installnodenpm=true -o
 
 FROM eclipse-temurin:17-jre-alpine
 VOLUME /tmp
